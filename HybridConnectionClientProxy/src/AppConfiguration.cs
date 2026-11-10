@@ -81,6 +81,20 @@ internal static class AppConfiguration
 			} )
 			.ToArray();
 
+		// Likewise report misspelt EntraId keys rather than ignoring them
+		var entraId = section.GetSection( EntraId.Section );
+		if( entraId.Exists() )
+		{
+			try
+			{
+				appSettings.EntraId = entraId.Get<EntraId>( options => options.ErrorOnUnknownConfiguration = true );
+			}
+			catch( InvalidOperationException ex )
+			{
+				throw new ConfigurationException( $"{EntraId.Section}: {SecretRedactor.RedactText( ex.Message )}" );
+			}
+		}
+
 		return appSettings;
 	}
 

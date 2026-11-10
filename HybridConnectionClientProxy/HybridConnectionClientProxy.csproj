@@ -25,6 +25,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Azure.Identity: Entra ID sign-in (EntraId settings) -->
+    <PackageReference Include="Azure.Identity" Version="1.21.0" />
     <PackageReference Include="Microsoft.Azure.Relay" Version="3.1.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.14" />
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.14" />
@@ -39,15 +41,14 @@
   </ItemGroup>
 
   <!--
-    Security pins, not used directly. Microsoft.Azure.Relay depends on older Azure.Identity (and through it
-    Azure.Core) and System.IdentityModel.Tokens.Jwt (and Microsoft.IdentityModel.JsonWebTokens) versions with
-    known vulnerabilities; these references lift them. When Microsoft.Azure.Relay is upgraded, try removing
+    Security pins, not used directly. Microsoft.Azure.Relay depends on older Azure.Identity (referenced above)
+    and, through it, Azure.Core, and on System.IdentityModel.Tokens.Jwt (and Microsoft.IdentityModel.JsonWebTokens)
+    versions with known vulnerabilities; these references lift them. When Microsoft.Azure.Relay is upgraded, try removing
     them and keep only those still needed for "dotnet list package" with the vulnerable and
     include-transitive options to report nothing.
   -->
   <ItemGroup>
     <PackageReference Include="Azure.Core" Version="1.64.0" />
-    <PackageReference Include="Azure.Identity" Version="1.21.0" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
   </ItemGroup>

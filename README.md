@@ -72,7 +72,7 @@ Each proxy is an entry in `AppSettings:Proxies`:
 | Setting | Required | Meaning |
 |---|---|---|
 | `Name` | no | Label used in log messages |
-| `HybridConnectionString` | yes | `Endpoint=sb://<namespace>.servicebus.windows.net/;SharedAccessKeyName=<rule>;SharedAccessKey=<key>;EntityPath=<hybrid connection>` |
+| `HybridConnectionString` | yes | `Endpoint=sb://<namespace>.servicebus.windows.net/;SharedAccessKeyName=<rule>;SharedAccessKey=<key>;EntityPath=<hybrid connection>`, or without `SharedAccessKeyName` and `SharedAccessKey` to [sign in with Entra ID](#entra-id-sign-in-instead-of-a-key) |
 | `ListenPort` | yes | Local TCP port to listen on |
 | `ListenIPAddress` | no | Local address to listen on; defaults to `127.0.0.1` |
 
@@ -241,6 +241,32 @@ az relay namespace authorization-rule keys list \
 
 The connection string for a proxy is the namespace connection string with `;EntityPath=<hybrid connection>`
 appended. To revoke a machine, delete its rule (or regenerate its keys).
+
+### Entra ID sign-in instead of a key
+
+A proxy whose `HybridConnectionString` has no shared access key
+(`Endpoint=sb://clientportal.servicebus.windows.net/;EntityPath=lonsql07dev-sql`) signs in with Microsoft Entra ID,
+so no key is stored anywhere. The identity needs the **Azure Relay Sender** role on the hybrid connection (or its
+namespace). Shared-key proxies keep working, and the two can be mixed. How to sign in is set once, in
+`AppSettings:EntraId`, for every key-less proxy:
+
+| `Method` | Signs in as | Other settings |
+|---|---|---|
+| `ManagedIdentity` | The Azure resource's managed identity | `ClientId` for a user-assigned identity; leave it out for the system-assigned one |
+| `WorkloadIdentity` | An app or user-assigned identity, by exchanging a federated token read from a file (Kubernetes workload identity, or an OIDC issuer of your own) | `TenantId`, `ClientId`, `TokenFile`; each defaults to `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_FEDERATED_TOKEN_FILE` |
+| `AzureCli` | The account `az login` (or `azure/login` in GitHub Actions) signed in | `TenantId`, optional |
+
+```sh
+AppSettings__EntraId__Method=WorkloadIdentity
+AppSettings__EntraId__TenantId=<tenant id>
+AppSettings__EntraId__ClientId=<identity's client id>
+AppSettings__EntraId__TokenFile=/run/user/1000/hccp/token
+AppSettings__Proxies__0__HybridConnectionString='Endpoint=sb://clientportal.servicebus.windows.net/;EntityPath=lonsql07dev-sql'
+AppSettings__Proxies__0__ListenPort=14331
+```
+
+The token is renewed shortly before it expires; a workload identity's token file must be kept fresh by whatever
+writes it. `TokenFile` is logged as `***`, like anything with "Token" in its name.
 
 ## Building a release
 

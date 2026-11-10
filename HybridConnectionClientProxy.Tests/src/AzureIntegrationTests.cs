@@ -1,9 +1,8 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Text.Json;
 
-using HybridConnectionClientProxy.Settings;
+using Microsoft.Extensions.Configuration;
 
 using Xunit;
 
@@ -12,13 +11,14 @@ namespace HybridConnectionClientProxy.Tests;
 /// <summary>
 /// Integration tests that run against a real Azure Hybrid Connection endpoint.
 ///
-/// These tests require <c>appsettings.Test.json</c> to be present alongside the test
-/// assembly, containing valid Azure Relay credentials in the same format as
-/// <c>appsettings.json</c>.  When the file is absent (fork PRs, local runs without
-/// credentials) every test is skipped automatically.
+/// They use the first proxy in <c>AppSettings</c>, with <c>AppSettings:EntraId</c> for a connection string
+/// without a shared access key, read from <c>appsettings.Test.json</c> beside the test assembly and then from
+/// environment variables prefixed <c>HCCP_TEST_</c> (<c>HCCP_TEST_AppSettings__Proxies__0__HybridConnectionString</c>,
+/// <c>HCCP_TEST_AppSettings__EntraId__Method</c>). With neither (pull requests, local runs without credentials)
+/// every test is skipped.
 ///
-/// The endpoint referenced by the first proxy in the config must have a listener
-/// registered and running for data-flow assertions to pass.
+/// The endpoint referenced by the first proxy must have a listener registered and running, in front of an SMTP
+/// server, for data-flow assertions to pass.
 /// </summary>
 public class AzureIntegrationTests
 {
@@ -31,12 +31,10 @@ public class AzureIntegrationTests
 	[Fact]
 	public async Task AzureProxy_WhenClientConnects_ConnectionEstablishedWithoutError()
 	{
-		var connStr = GetConnectionString();
-		if( connStr is null ) Assert.Skip( "No Azure credentials in appsettings.Test.json" );
+		var provider = CreateProviderOrSkip();
 
 		using var cts = new CancellationTokenSource( TimeoutMs );
 
-		var provider = HybridConnectionProviderFactory.Create( new Proxy { HybridConnectionString = connStr }, "azure-test" );
 		var (proxyListener, proxyPort) = StartListener();
 		var proxyTask = ClientProxy.Create( provider, proxyListener, cts.Token );
 
@@ -54,12 +52,10 @@ public class AzureIntegrationTests
 	[Fact]
 	public async Task AzureProxy_WhenClientDisconnects_CleansUpPromptly()
 	{
-		var connStr = GetConnectionString();
-		if( connStr is null ) Assert.Skip( "No Azure credentials in appsettings.Test.json" );
+		var provider = CreateProviderOrSkip();
 
 		using var cts = new CancellationTokenSource( TimeoutMs );
 
-		var provider = HybridConnectionProviderFactory.Create( new Proxy { HybridConnectionString = connStr }, "azure-test" );
 		var (proxyListener, proxyPort) = StartListener();
 		var proxyTask = ClientProxy.Create( provider, proxyListener, cts.Token );
 
@@ -82,12 +78,10 @@ public class AzureIntegrationTests
 	[Fact]
 	public async Task AzureProxy_SmtpEhlo_ServerResponds250()
 	{
-		var connStr = GetConnectionString();
-		if( connStr is null ) Assert.Skip( "No Azure credentials in appsettings.Test.json" );
+		var provider = CreateProviderOrSkip();
 
 		using var cts = new CancellationTokenSource( TimeoutMs );
 
-		var provider = HybridConnectionProviderFactory.Create( new Proxy { HybridConnectionString = connStr }, "azure-test" );
 		var (proxyListener, proxyPort) = StartListener();
 		_ = ClientProxy.Create( provider, proxyListener, cts.Token );
 
@@ -117,21 +111,21 @@ public class AzureIntegrationTests
 	// Helpers
 	// -------------------------------------------------------------------------
 
-	private static string? GetConnectionString()
-	{
-		var path = Path.Combine( AppContext.BaseDirectory, "appsettings.Test.json" );
-		if( !File.Exists( path ) ) return null;
+	private const string SkipReason = "No relay test settings (appsettings.Test.json or HCCP_TEST_ environment variables)";
 
-		try
-		{
-			using var doc = JsonDocument.Parse( File.ReadAllText( path ) );
-			var proxies = doc.RootElement
-				.GetProperty( "AppSettings" )
-				.GetProperty( "Proxies" );
-			if( proxies.GetArrayLength() == 0 ) return null;
-			return proxies[0].GetProperty( "HybridConnectionString" ).GetString();
-		}
-		catch { return null; }
+	private static IHybridConnectionProvider CreateProviderOrSkip()
+	{
+		var configuration = new ConfigurationBuilder()
+			.AddJsonFile( Path.Combine( AppContext.BaseDirectory, "appsettings.Test.json" ), optional: true )
+			.AddEnvironmentVariables( "HCCP_TEST_" )
+			.Build();
+
+		var settings = AppConfiguration.BindAppSettings( configuration );
+		var proxy = settings.Proxies.FirstOrDefault();
+		if( string.IsNullOrWhiteSpace( proxy?.HybridConnectionString ) )
+			Assert.Skip( SkipReason );
+
+		return new HybridConnectionProviderFactory( settings.EntraId ).Create( proxy, "azure-test" );
 	}
 
 	private static (TcpListener listener, int port) StartListener()

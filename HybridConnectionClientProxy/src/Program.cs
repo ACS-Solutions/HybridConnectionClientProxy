@@ -104,7 +104,7 @@ static async Task<int> RunAsync( string[] args, CancellationTokenSource stopping
 	var appSettings = AppConfiguration.BindAppSettings( configuration );
 
 	Log.Information( "Starting" );
-	var host = ProxyHost.Start( appSettings, HybridConnectionProviderFactory.Create );
+	var host = ProxyHost.Start( appSettings, new HybridConnectionProviderFactory( appSettings.EntraId ).Create );
 
 	Log.Information( "Running" );
 	if( !Console.IsInputRedirected && Environment.UserInteractive )
