@@ -41,14 +41,15 @@
   </ItemGroup>
 
   <!--
-    Security pins, not used directly. Microsoft.Azure.Relay depends on older Azure.Identity (referenced above)
-    and, through it, Azure.Core, and on System.IdentityModel.Tokens.Jwt (and Microsoft.IdentityModel.JsonWebTokens)
-    versions with known vulnerabilities; these references lift them. When Microsoft.Azure.Relay is upgraded, try removing
-    them and keep only those still needed for "dotnet list package" with the vulnerable and
-    include-transitive options to report nothing.
+    Version alignment, not used directly. Microsoft.Azure.Relay 3.1.1 (the latest) depends on
+    System.IdentityModel.Tokens.Jwt 6.36.0, while Azure.Identity's MSAL brings Microsoft.IdentityModel.Abstractions 8.x.
+    Microsoft.IdentityModel packages should all be one version, so these lift the 6.x ones to match (and let Dependabot
+    keep them current). They were first added to lift versions with known vulnerabilities; as of 11 Nov 2026 without them
+    "dotnet list package" with the vulnerable and include-transitive options reports nothing, and the tests pass. When
+    Microsoft.Azure.Relay moves to 8.x, remove them. Azure.Core needs no pin: Azure.Identity, referenced directly above,
+    decides its version.
   -->
   <ItemGroup>
-    <PackageReference Include="Azure.Core" Version="1.64.0" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.23.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
   </ItemGroup>
