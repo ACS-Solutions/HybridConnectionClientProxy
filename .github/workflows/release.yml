@@ -31,8 +31,9 @@ concurrency:
 jobs:
   test:
     uses: ./.github/workflows/dotnet.yml
-    secrets:
-      APPSETTINGS: ${{ secrets.APPSETTINGS }}
+    permissions:
+      contents: read
+      id-token: write  # dotnet.yml's azure/login; a tag's token isn't accepted, so the relay tests skip on tags
 
   package:
     needs: test

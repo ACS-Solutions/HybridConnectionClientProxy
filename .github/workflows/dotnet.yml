@@ -9,10 +9,8 @@ on:
   pull_request:
     branches: [ "master" ]
   # Called by release.yml so a release is only built from a commit that passes the same build and tests
+  # The caller must grant id-token: write (see release.yml)
   workflow_call:
-    secrets:
-      APPSETTINGS:
-        required: false
 
 permissions:
   contents: read
@@ -21,6 +19,9 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write  # for azure/login; only a master run's token is accepted (see below)
 
     steps:
     - uses: actions/checkout@v7
@@ -28,17 +29,24 @@ jobs:
       uses: actions/setup-dotnet@v6
       with:
         dotnet-version: 10.0.x
-    # Only on master (its pushes, and release runs dispatched from it): a pull request's run, or a run on any
-    # other branch or tag, executes code that hasn't been reviewed, which could read the relay key (#15).
-    # Without the file the Azure integration tests skip.
-    - name: Write test appsettings
+    # The Azure integration tests sign in to the relay as managed identity id-hccp-ci (Azure Relay Sender on
+    # clientportal/smtp4dev only), through its federated credential for this repository's master branch (#15).
+    # No relay key is stored anywhere. Only master runs sign in: Entra accepts no other ref's token, so for a pull
+    # request, another branch or a tag the tests skip. The ids below are not secrets.
+    - name: Sign in to Azure (master only)
       if: github.ref == 'refs/heads/master'
-      env:
-        APPSETTINGS: ${{ secrets.APPSETTINGS }}
+      uses: azure/login@v3
+      with:
+        client-id: 3be288bd-8dfe-484c-9fab-2ae0bd7dec1e
+        tenant-id: 317d17b3-e606-4ca4-924c-34fb9ad01b95
+        allow-no-subscriptions: true
+    - name: Configure the relay tests (master only)
+      if: github.ref == 'refs/heads/master'
       run: |
-        if [ -n "$APPSETTINGS" ]; then
-          echo "$APPSETTINGS" > HybridConnectionClientProxy.Tests/appsettings.Test.json
-        fi
+        {
+          echo "HCCP_TEST_AppSettings__Proxies__0__HybridConnectionString=Endpoint=sb://clientportal.servicebus.windows.net/;EntityPath=smtp4dev"
+          echo "HCCP_TEST_AppSettings__EntraId__Method=AzureCli"
+        } >> "$GITHUB_ENV"
     - name: Restore dependencies
       run: dotnet restore HybridConnectionClientProxy.slnx
     - name: Build
