@@ -1,0 +1,23 @@
+# Dependabot version updates (#13, claude-hosts#64): weekly, one grouped pull request per ecosystem.
+# Stable versions only (Dependabot's default). global.json's SDK isn't updated here: .NET major
+# upgrades come from the root session's yearly .NET watcher.
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directories:
+      - "/**"
+    schedule:
+      interval: "weekly"
+    groups:
+      nuget:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
