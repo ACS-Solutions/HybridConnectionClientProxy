@@ -22,7 +22,17 @@ internal sealed class TcpHybridConnectionProvider : IHybridConnectionProvider
 	public async Task<Stream> CreateConnectionAsync( CancellationToken cancellationToken = default )
 	{
 		var client = new TcpClient();
-		await client.ConnectAsync( IPAddress.Loopback, _targetPort, cancellationToken );
-		return client.GetStream();
+		try
+		{
+			await client.ConnectAsync( IPAddress.Loopback, _targetPort, cancellationToken );
+			return client.GetStream();
+		}
+		catch
+		{
+			// Cancellation can win the race with a connect the server has already accepted: close the socket, as
+			// HybridConnectionClientProvider does with a late relay connection, or the server waits for it forever.
+			client.Dispose();
+			throw;
+		}
 	}
 }
