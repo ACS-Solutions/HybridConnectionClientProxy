@@ -57,7 +57,7 @@ public class ProxyHostTests
 	public void Start_MissingConnectionString_IsConfigurationError()
 	{
 		var ex = Assert.Throws<ConfigurationException>( () =>
-			ProxyHost.Start( Settings( new Proxy { Name = "db", ListenPort = FreePort() } ), HybridConnectionProviderFactory.Create ) );
+			ProxyHost.Start( Settings( new Proxy { Name = "db", ListenPort = FreePort() } ), HybridConnectionProviderFactory.SharedAccessKeyOnly.Create ) );
 
 		Assert.Contains( "HybridConnectionString", ex.Message );
 	}
@@ -74,7 +74,7 @@ public class ProxyHostTests
 		var ex = Assert.Throws<ConfigurationException>( () =>
 			ProxyHost.Start(
 				Settings( new Proxy { Name = "db", HybridConnectionString = connectionString, ListenPort = FreePort() } ),
-				HybridConnectionProviderFactory.Create
+				HybridConnectionProviderFactory.SharedAccessKeyOnly.Create
 			) );
 
 		Assert.DoesNotContain( Key, ex.Message );
@@ -93,7 +93,7 @@ public class ProxyHostTests
 				HybridConnectionString = "Endpoint=sb://example.invalid/;SharedAccessKeyName=cody;SharedAccessKey=" + Key + ";EntityPath=e",
 				ListenPort = port,
 			} ),
-			HybridConnectionProviderFactory.Create
+			HybridConnectionProviderFactory.SharedAccessKeyOnly.Create
 		);
 
 		Assert.Equal( port, Assert.Single( host.ListenEndpoints ).Port );
