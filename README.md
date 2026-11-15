@@ -13,7 +13,7 @@ Under the hood, Microsoft implement the client-side (running in your Azure Web A
 *Connect to on-prem resources from anywhere.*
 
 Hybrid Connection Client Proxy is 
-- Written as a console app in .NET 10
+- Written as a console app in .NET 11
 - Uses the official Microsoft.Azure.Relay to provide the Service Bus connections and implement the Hybrid Connection protocol
 - Configured from JSON files, environment variables or the command line (and UserSecrets for development)
 - Runs on Windows and Linux, interactively or as a service (systemd, with logs in the journal)
@@ -27,7 +27,7 @@ Each [release](https://github.com/ACS-Solutions/HybridConnectionClientProxy/rele
 
 | Asset | Contents | Needs |
 |---|---|---|
-| `HybridConnectionClientProxy-<version>-linux-x64.tar.gz` | `HybridConnectionClientProxy` (single file, framework-dependent), `appsettings.json`, `README.md`, `LICENSE.txt` | .NET 10 runtime (`Microsoft.NETCore.App` 10.0.x; on Ubuntu `apt install dotnet-runtime-10.0`) |
+| `HybridConnectionClientProxy-<version>-linux-x64.tar.gz` | `HybridConnectionClientProxy` (single file, framework-dependent), `appsettings.json`, `README.md`, `LICENSE.txt` | .NET 11 runtime (`Microsoft.NETCore.App` 11.0.x; on Ubuntu `apt install dotnet-runtime-11.0`) |
 | `HybridConnectionClientProxy-<version>-win-x64.zip` | `HybridConnectionClientProxy.exe` (single file, self-contained), `appsettings.json`, `appsettings.Windows.json`, `README.md`, `LICENSE.txt` | nothing |
 | `SHA256SUMS` | SHA-256 of both archives, in `sha256sum` format | |
 
@@ -121,7 +121,7 @@ The first of these that applies:
 1. `--config <dir>` on the command line
 2. The `HCCP_CONFIG_DIR` environment variable
 3. The `config` directory beside the binary's directory: if the binary is under a `bin` directory, `config` is a
-   sibling of that `bin` (so `project/bin/Debug/net10.0` → `project/config`, `C:\Tools\Proxy\bin` → `C:\Tools\Proxy\config`);
+   sibling of that `bin` (so `project/bin/Debug/net11.0` → `project/config`, `C:\Tools\Proxy\bin` → `C:\Tools\Proxy\config`);
    otherwise it is a sibling of the binary's directory
 4. The same, relative to the working directory (how earlier versions found it)
 
