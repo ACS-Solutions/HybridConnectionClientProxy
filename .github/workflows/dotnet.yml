@@ -27,7 +27,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v6
       with:
-        dotnet-version: 10.0.x
+        dotnet-version: 11.0.x
     # Only on master (its pushes, and release runs dispatched from it): a pull request's run, or a run on any
     # other branch or tag, executes code that hasn't been reviewed, which could read the relay key (#15).
     # Without the file the Azure integration tests skip.

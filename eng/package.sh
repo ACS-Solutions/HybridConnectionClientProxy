@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Publishes and packages the release assets into <output-dir>:
-#   HybridConnectionClientProxy-<version>-linux-x64.tar.gz  framework-dependent single file (needs the .NET 10 runtime)
+#   HybridConnectionClientProxy-<version>-linux-x64.tar.gz  framework-dependent single file (needs the .NET 11 runtime)
 #   HybridConnectionClientProxy-<version>-win-x64.zip       self-contained single file
 #   SHA256SUMS                                              sha256sum format, covering both archives
 #
