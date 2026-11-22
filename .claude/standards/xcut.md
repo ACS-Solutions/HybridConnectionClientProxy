@@ -5,7 +5,7 @@ resolved under "Decisions" at the end, and the code was brought into line in the
 
 These rules override the generic `xcut:standards`. Reviews cite the `H-…` IDs.
 
-Context: a single-process .NET 10 console app / systemd service. No DI container, no ASP.NET Core,
+Context: a single-process .NET 11 console app / systemd service. No DI container, no ASP.NET Core,
 no hosted-service framework. Static Serilog `Log` throughout.
 
 ---
